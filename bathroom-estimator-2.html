@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Reno Estimator">
+<meta name="theme-color" content="#0F6E56">
+<title>Bathroom Reno Estimator</title>
+<link rel="manifest" id="pwa-manifest">
+<script>
+const manifest={name:"Reno Estimator",short_name:"Reno Est.",description:"Bathroom renovation estimator",start_url:".",display:"standalone",background_color:"#f5f5f0",theme_color:"#0F6E56",orientation:"portrait",icons:[{src:"data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%230F6E56'/><text x='96' y='130' font-size='100' text-anchor='middle'>🛁</text></svg>"),sizes:"192x192",type:"image/svg+xml"}]};
+const mb=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+document.getElementById('pwa-manifest').href=URL.createObjectURL(mb);
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #0F6E56;
+  --green-light: #E1F5EE;
+  --green-dark: #085041;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --red: #A32D2D;
+  --red-light: #FCEBEB;
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --text-hint: #9ca3af;
+  --bg: #f5f5f0;
+  --bg-card: #ffffff;
+  --border: #e5e5e0;
+  --border-strong: #d1d1cc;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+
+/* Layout */
+.app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
+.content { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(16px + var(--safe-bottom)); }
+.tab-bar { display: flex; background: var(--bg-card); border-top: 1px solid var(--border); padding: 8px 0 calc(8px + var(--safe-bottom)); flex-shrink: 0; }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 4px 0; color: var(--text-hint); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; transition: color 0.15s; }
+.tab.active { color: var(--green); }
+.tab svg { width: 22px; height: 22px; stroke-width: 1.75; }
+
+/* Header */
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.page-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+/* Cards */
+.card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
+.card-header { padding: 14px 16px 0; display: flex; align-items: center; gap: 8px; }
+.card-header-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--green-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.card-header-icon svg { width: 16px; height: 16px; stroke: var(--green); stroke-width: 2; }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-body { padding: 14px 16px 16px; }
+
+/* Form elements */
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; letter-spacing: 0.2px; }
+input[type=text], input[type=number], input[type=date], input[type=email], input[type=tel], select, textarea {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text); background: var(--bg);
+  outline: none; transition: border-color 0.15s, background 0.15s; -webkit-appearance: none; appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--green); background: #fff; }
+textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.prefix-wrap { position: relative; }
+.prefix-wrap .pfx { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 15px; pointer-events: none; }
+.prefix-wrap input { padding-left: 24px; }
+
+/* Metric cards */
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.metric { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; }
+.metric-label { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.3px; text-transform: uppercase; margin-bottom: 6px; }
+.metric-value { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.metric-value.green { color: var(--green); }
+
+/* Buttons */
+.btn { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 18px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s, transform 0.1s; width: 100%; }
+.btn:active { transform: scale(0.98); opacity: 0.85; }
+.btn-primary { background: var(--green); color: #fff; margin-bottom: 10px; }
+.btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); margin-bottom: 10px; }
+.btn-danger { background: var(--red-light); color: var(--red); margin-bottom: 10px; }
+.btn-sm { padding: 8px 14px; font-size: 13px; width: auto; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; display: inline-flex; align-items: center; gap: 5px; }
+.btn-sm:active { opacity: 0.7; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Line items */
+.line-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
+.line-item-row1 { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: start; margin-bottom: 8px; }
+.line-item-row2 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+.line-item input { padding: 8px 10px; font-size: 14px; }
+.line-item-total { font-size: 13px; font-weight: 600; color: var(--green); font-family: 'DM Mono', monospace; white-space: nowrap; padding-bottom: 9px; }
+.del-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: var(--red-light); border: none; border-radius: var(--radius-sm); cursor: pointer; flex-shrink: 0; }
+.del-btn svg { width: 16px; height: 16px; stroke: var(--red); stroke-width: 2; }
+.del-btn:active { opacity: 0.7; }
+.add-item-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; width: 100%; background: none; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-muted); cursor: pointer; margin-top: 4px; }
+.add-item-btn:active { background: var(--bg-card); }
+
+/* Section totals */
+.section-total { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; border-top: 1px solid var(--border); margin-top: 4px; }
+.section-total span:first-child { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.section-total span:last-child { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
+
+/* Summary */
+.summary-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.summary-row:last-child { border-bottom: none; padding-top: 12px; }
+.summary-row .lbl { font-size: 14px; color: var(--text-muted); }
+.summary-row .val { font-size: 14px; font-weight: 500; font-family: 'DM Mono', monospace; }
+.summary-total .lbl { font-size: 16px; font-weight: 600; color: var(--text); }
+.summary-total .val { font-size: 20px; font-weight: 700; color: var(--green); font-family: 'DM Mono', monospace; }
+
+/* Slider */
+.slider-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+.slider-row label { margin: 0; white-space: nowrap; font-size: 13px; }
+input[type=range] { -webkit-appearance: none; flex: 1; height: 4px; background: var(--border-strong); border-radius: 2px; outline: none; border: none; padding: 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--green); cursor: pointer; }
+.slider-val { font-size: 14px; font-weight: 600; color: var(--green); min-width: 36px; text-align: right; font-family: 'DM Mono', monospace; }
+
+/* Status badges */
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.2px; }
+.badge-draft { background: var(--blue-light); color: var(--blue); }
+.badge-sent { background: var(--amber-light); color: var(--amber); }
+.badge-accepted { background: var(--green-light); color: var(--green-dark); }
+.badge-declined { background: var(--red-light); color: var(--red); }
+
+/* Job rows */
+.job-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
+.job-card:active { background: var(--bg); }
+.job-card-left { flex: 1; min-width: 0; }
+.job-card-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.job-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.job-card-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
+.job-card-total { font-size: 16px; font-weight: 700; color: var(--green); font-family: 'DM Mono', monospace; }
+.job-card-date { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* Quote preview */
+.quote-doc { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; margin-bottom: 12px; }
+.quote-co-name { font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+.quote-doc-meta { font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+.quote-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+.qt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.qt th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.qt td { padding: 8px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+.qt tr:last-child td { border-bottom: none; }
+.qt .r { text-align: right; font-family: 'DM Mono', monospace; }
+.qt .cat-row td { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; padding: 10px 0 4px; background: none; }
+.sig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+.sig-block { font-size: 12px; color: var(--text-muted); }
+.sig-line { border-bottom: 1px solid var(--border-strong); margin: 20px 0 4px; }
+
+/* Rate items */
+.rate-item { display: grid; grid-template-columns: 1fr 60px 90px 34px; gap: 8px; align-items: center; margin-bottom: 8px; }
+.rate-item input { padding: 8px 10px; font-size: 14px; }
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Filter row */
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 2px; }
+.filter-chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.filter-chip.active { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* Dim info */
+.dim-info { font-size: 12px; color: var(--text-muted); padding: 8px 12px; background: var(--green-light); border-radius: var(--radius-sm); margin-top: 8px; }
+
+/* Empty state */
+.empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.empty svg { width: 40px; height: 40px; stroke: var(--border-strong); margin-bottom: 12px; }
+.empty p { font-size: 14px; }
+
+/* Job detail modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg-card); border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-height: 80vh; overflow-y: auto; padding: 20px 16px calc(20px + var(--safe-bottom)); }
+.modal-handle { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+.modal-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.modal-row:last-child { border-bottom: none; }
+.modal-row .ml { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="content" id="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dash">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle" id="co-display-name">Your Reno Business</div>
+        </div>
+        <button class="btn-sm" onclick="goNewQuote()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+          New quote
+        </button>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Total quotes</div><div class="metric-value" id="d-total">0</div></div>
+        <div class="metric"><div class="metric-label">Accepted</div><div class="metric-value green" id="d-accepted">0</div></div>
+        <div class="metric"><div class="metric-label">Pending</div><div class="metric-value" id="d-pending">0</div></div>
+        <div class="metric"><div class="metric-label">Pipeline</div><div class="metric-value green" id="d-pipeline">$0</div></div>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:10px;letter-spacing:0.3px;text-transform:uppercase">Recent quotes</div>
+      <div id="dash-jobs"></div>
+    </div>
+
+    <!-- NEW QUOTE -->
+    <div class="page" id="page-quote">
+      <div class="page-header">
+        <div>
+          <div class="page-title" id="quote-page-title">New quote</div>
+          <div class="page-subtitle">Fill in client & job details</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor"/></svg></div>
+          <div class="card-title">Client details</div>
+        </div>
+        <div class="card-body">
+          <div class="field"><label>Client name</label><input type="text" id="q-client" placeholder="e.g. Sarah Johnson"></div>
+          <div class="input-row">
+            <div class="field"><label>Phone</label><input type="tel" id="q-phone" placeholder="04xx xxx xxx"></div>
+            <div class="field"><label>Email</label><input type="email" id="q-email" placeholder="client@email.com"></div>
+          </div>
+          <div class="field"><label>Job address</label><input type="text" id="q-address" placeholder="123 Street, Brisbane QLD"></div>
+          <div class="input-row">
+            <div class="field"><label>Quote date</label><input type="date" id="q-date"></div>
+            <div class="field"><label>Valid (days)</label><input type="number" id="q-valid" value="30" min="1"></div>
+          </div>
+          <div class="field"><label>Quote number</label><input type="text" id="q-num" placeholder="Auto-generated"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7h18M3 12h18M3 17h12" stroke="currentColor" stroke-linecap="round"/></svg></div>
+          <div class="card-title">Room dimensions</div>
+        </div>
+        <div class="card-body">
+          <div class="input-row-3">
+            <div class="field"><label>Length (m)</label><input type="number" id="q-L" value="2.5" step="0.1" min="0" oninput="calcQuote()"></div>
+            <div class="field"><label>Width (m)</label><input type="number" id="q-W" value="1.8" step="0.1" min="0" oninput="calcQuote()"></div>
+            <div class="field"><label>Height (m)</label><input type="number" id="q-H" value="2.4" step="0.1" min="0" oninput="calcQuote()"></div>
+          </div>
+          <div class="dim-info">Floor: <strong id="q-floor">4.5 m²</strong> &nbsp;|&nbsp; Walls: <strong id="q-walls">40.3 m²</strong></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-linecap="round"/></svg></div>
+          <div class="card-title">Labour</div>
+        </div>
+        <div class="card-body">
+          <div id="lines-Labour"></div>
+          <button class="add-item-btn" onclick="addLine('Labour','',1,120)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> Add labour item
+          </button>
+          <div class="section-total"><span>Labour subtotal</span><span id="st-Labour">$0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-linecap="round"/></svg></div>
+          <div class="card-title">Materials & tiling</div>
+        </div>
+        <div class="card-body">
+          <div id="lines-Material"></div>
+          <button class="add-item-btn" onclick="addLine('Material','',1,200)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> Add material item
+          </button>
+          <div class="section-total"><span>Materials subtotal</span><span id="st-Material">$0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor"/></svg></div>
+          <div class="card-title">Other costs</div>
+        </div>
+        <div class="card-body">
+          <div id="lines-Other"></div>
+          <button class="add-item-btn" onclick="addLine('Other','',1,300)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> Add other item
+          </button>
+          <div class="section-total"><span>Other subtotal</span><span id="st-Other">$0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9 7h6m0 10v-3m-3 3v-6m-2 6v-1m8-9H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-1" stroke="currentColor" stroke-linecap="round"/></svg></div>
+          <div class="card-title">Totals</div>
+        </div>
+        <div class="card-body">
+          <div class="slider-row" style="margin-bottom:14px">
+            <label>Contingency</label>
+            <input type="range" id="q-cont" min="0" max="30" value="10" step="1" oninput="calcQuote()">
+            <div class="slider-val" id="q-cont-pct">10%</div>
+          </div>
+          <div class="summary-row"><span class="lbl">Subtotal</span><span class="val" id="q-sub">$0</span></div>
+          <div class="summary-row"><span class="lbl" id="q-cont-lbl">Contingency (10%)</span><span class="val" id="q-cont-amt">$0</span></div>
+          <div class="summary-row"><span class="lbl">GST (10%)</span><span class="val" id="q-gst">$0</span></div>
+          <div class="summary-row summary-total"><span class="lbl">Total (inc. GST)</span><span class="val" id="q-total">$0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-linecap="round"/></svg></div>
+          <div class="card-title">Notes & terms</div>
+        </div>
+        <div class="card-body">
+          <div class="field"><label>Scope of works</label><textarea id="q-notes" placeholder="Describe inclusions, exclusions, scope..."></textarea></div>
+          <div class="field"><label>Terms & conditions</label><textarea id="q-terms" placeholder="Payment terms, warranty..."></textarea></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveQuote('sent')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+        Save & mark as sent
+      </button>
+      <button class="btn btn-secondary" onclick="saveQuote('draft')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
+        Save as draft
+      </button>
+      <button class="btn btn-secondary" onclick="previewQuote()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview quote
+      </button>
+      <button class="btn btn-danger" onclick="clearQuote()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        Clear form
+      </button>
+    </div>
+
+    <!-- JOBS -->
+    <div class="page" id="page-jobs">
+      <div class="page-header">
+        <div>
+          <div class="page-title">All jobs</div>
+          <div class="page-subtitle" id="jobs-count">0 quotes</div>
+        </div>
+        <button class="btn-sm" onclick="goNewQuote()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+          New
+        </button>
+      </div>
+      <div class="filter-row">
+        <button class="filter-chip active" onclick="setFilter('',this)">All</button>
+        <button class="filter-chip" onclick="setFilter('draft',this)">Draft</button>
+        <button class="filter-chip" onclick="setFilter('sent',this)">Sent</button>
+        <button class="filter-chip" onclick="setFilter('accepted',this)">Accepted</button>
+        <button class="filter-chip" onclick="setFilter('declined',this)">Declined</button>
+      </div>
+      <div id="jobs-list"></div>
+    </div>
+
+    <!-- RATES -->
+    <div class="page" id="page-rates">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Rate library</div>
+          <div class="page-subtitle">Your standard rates</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke="currentColor"/></svg></div>
+          <div class="card-title">Labour rates</div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 60px 90px 34px;gap:8px;margin-bottom:6px">
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600">TRADE</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-align:right">UNIT</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-align:right">RATE</span>
+            <span></span>
+          </div>
+          <div id="labour-rates"></div>
+          <button class="add-item-btn" onclick="addRate('labour','New trade','hr',110)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> Add rate
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" stroke="currentColor"/></svg></div>
+          <div class="card-title">Material rates</div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 60px 90px 34px;gap:8px;margin-bottom:6px">
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600">MATERIAL</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-align:right">UNIT</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-align:right">RATE</span>
+            <span></span>
+          </div>
+          <div id="material-rates"></div>
+          <button class="add-item-btn" onclick="addRate('material','New material','m²',90)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> Add rate
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="loadRatesIntoQuote()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Load rates into new quote
+      </button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Company</div>
+          <div class="page-subtitle">Your business details</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="field"><label>Company name</label><input type="text" id="co-name" placeholder="Your Bathroom Renovations Pty Ltd"></div>
+          <div class="field"><label>ABN</label><input type="text" id="co-abn" placeholder="12 345 678 901"></div>
+          <div class="input-row">
+            <div class="field"><label>Phone</label><input type="tel" id="co-phone" placeholder="07 xxxx xxxx"></div>
+            <div class="field"><label>Email</label><input type="email" id="co-email" placeholder="info@yourbusiness.com.au"></div>
+          </div>
+          <div class="field"><label>Address</label><input type="text" id="co-address" placeholder="Brisbane QLD 4000"></div>
+          <div class="field"><label>Website</label><input type="text" id="co-web" placeholder="www.yourbusiness.com.au"></div>
+          <div class="field"><label>QBCC licence number</label><input type="text" id="co-lic" placeholder="e.g. 1234567"></div>
+          <div class="field"><label>Default terms & conditions</label><textarea id="co-terms" placeholder="30% deposit on acceptance. Balance due on completion. 12-month workmanship warranty..."></textarea></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg>
+        Save company details
+      </button>
+      <div id="settings-saved" style="display:none;text-align:center;font-size:13px;color:var(--green);margin-top:4px;font-weight:500">✓ Saved successfully</div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="page" id="page-preview">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Quote preview</div>
+          <div class="page-subtitle">How it looks to your client</div>
+        </div>
+        <button class="btn-sm" onclick="showTab('quote')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Back
+        </button>
+      </div>
+      <div id="preview-content"></div>
+    </div>
+
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab active" id="tab-dash" onclick="showTab('dash')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="tab" id="tab-quote" onclick="showTab('quote')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+      New quote
+    </button>
+    <button class="tab" id="tab-jobs" onclick="showTab('jobs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2M8 7V5a2 2 0 014 0"/></svg>
+      Jobs
+    </button>
+    <button class="tab" id="tab-rates" onclick="showTab('rates')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Rates
+    </button>
+    <button class="tab" id="tab-settings" onclick="showTab('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Company
+    </button>
+  </div>
+</div>
+
+<!-- JOB DETAIL MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-content">
+    <div class="modal-handle"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let jobs = [];
+let lineItems = { Labour: [], Material: [], Other: [] };
+let labourRates = [
+  {name:'Plumber',unit:'hr',rate:125},
+  {name:'Tiler',unit:'hr',rate:95},
+  {name:'Electrician',unit:'hr',rate:115},
+  {name:'Builder',unit:'hr',rate:95},
+  {name:'Waterproofer',unit:'hr',rate:90},
+];
+let materialRates = [
+  {name:'Floor tiles (supply & lay)',unit:'m²',rate:95},
+  {name:'Wall tiles (supply & lay)',unit:'m²',rate:85},
+  {name:'Waterproofing membrane',unit:'m²',rate:45},
+  {name:'Cement sheet',unit:'m²',rate:35},
+];
+let company = {name:'',abn:'',phone:'',email:'',address:'',web:'',lic:'',terms:'30% deposit required on acceptance. Balance due on completion. All work carries a 12-month workmanship warranty.'};
+let quoteCounter = 1;
+let jobFilter = '';
+let currentEditId = null;
+
+function fmt(n){ return '$' + Math.round(n).toLocaleString('en-AU'); }
+
+function showTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('content').scrollTop = 0;
+  if(tab==='dash') renderDash();
+  if(tab==='jobs') renderJobs();
+  if(tab==='rates') renderRates();
+  if(tab==='settings') loadSettings();
+}
+
+function goNewQuote() {
+  currentEditId = null;
+  document.getElementById('quote-page-title').textContent = 'New quote';
+  showTab('quote');
+}
+
+// LINE ITEMS
+function addLine(cat, name, qty, rate) {
+  lineItems[cat].push({name, qty, rate});
+  renderLines(cat);
+  calcQuote();
+}
+
+function renderLines(cat) {
+  const c = document.getElementById('lines-'+cat);
+  c.innerHTML = '';
+  lineItems[cat].forEach((l, i) => {
+    const d = document.createElement('div');
+    d.className = 'line-item';
+    d.innerHTML = `
+      <div class="line-item-row1">
+        <input type="text" value="${l.name}" placeholder="Description" oninput="lineItems['${cat}'][${i}].name=this.value">
+        <button class="del-btn" onclick="lineItems['${cat}'].splice(${i},1);renderLines('${cat}');calcQuote()" aria-label="Remove">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="line-item-row2">
+        <div class="field" style="margin:0"><label>Qty</label><input type="number" value="${l.qty}" min="0" step="any" oninput="lineItems['${cat}'][${i}].qty=parseFloat(this.value)||0;calcQuote()"></div>
+        <div class="field" style="margin:0"><label>Unit (AUD)</label><div class="prefix-wrap"><span class="pfx">$</span><input type="number" value="${l.rate}" min="0" step="any" oninput="lineItems['${cat}'][${i}].rate=parseFloat(this.value)||0;calcQuote()"></div></div>
+        <div class="line-item-total" id="lt-${cat}-${i}">$0</div>
+      </div>`;
+    c.appendChild(d);
+  });
+  calcQuote();
+}
+
+function calcQuote() {
+  const L = parseFloat(document.getElementById('q-L').value)||0;
+  const W = parseFloat(document.getElementById('q-W').value)||0;
+  const H = parseFloat(document.getElementById('q-H').value)||0;
+  document.getElementById('q-floor').textContent = (L*W).toFixed(1)+' m²';
+  document.getElementById('q-walls').textContent = (2*(L+W)*H).toFixed(1)+' m²';
+
+  let sub = 0;
+  ['Labour','Material','Other'].forEach(cat => {
+    let catTotal = 0;
+    lineItems[cat].forEach((l,i) => {
+      const t = l.qty * l.rate; catTotal += t; sub += t;
+      const el = document.getElementById('lt-'+cat+'-'+i);
+      if(el) el.textContent = fmt(t);
+    });
+    const stEl = document.getElementById('st-'+cat);
+    if(stEl) stEl.textContent = fmt(catTotal);
+  });
+
+  const pct = parseInt(document.getElementById('q-cont').value)||0;
+  document.getElementById('q-cont-pct').textContent = pct+'%';
+  document.getElementById('q-cont-lbl').textContent = 'Contingency ('+pct+'%)';
+  const cont = sub*pct/100;
+  const gst = (sub+cont)*0.1;
+  const total = sub+cont+gst;
+  document.getElementById('q-sub').textContent = fmt(sub);
+  document.getElementById('q-cont-amt').textContent = fmt(cont);
+  document.getElementById('q-gst').textContent = fmt(gst);
+  document.getElementById('q-total').textContent = fmt(total);
+}
+
+function getTotal() {
+  let sub = 0;
+  ['Labour','Material','Other'].forEach(cat => lineItems[cat].forEach(l => sub += l.qty*l.rate));
+  const pct = parseInt(document.getElementById('q-cont').value)||0;
+  return Math.round((sub + sub*pct/100) * 1.1);
+}
+
+function saveQuote(status) {
+  const client = document.getElementById('q-client').value || 'Unnamed client';
+  const num = document.getElementById('q-num').value || ('Q-'+String(quoteCounter).padStart(3,'0'));
+  if(!document.getElementById('q-num').value) quoteCounter++;
+  const job = {
+    id: currentEditId || Date.now(), num, status, client,
+    phone: document.getElementById('q-phone').value,
+    email: document.getElementById('q-email').value,
+    address: document.getElementById('q-address').value,
+    date: document.getElementById('q-date').value || new Date().toISOString().slice(0,10),
+    valid: document.getElementById('q-valid').value || 30,
+    dims: {L:document.getElementById('q-L').value, W:document.getElementById('q-W').value, H:document.getElementById('q-H').value},
+    lines: JSON.parse(JSON.stringify(lineItems)),
+    cont: document.getElementById('q-cont').value,
+    notes: document.getElementById('q-notes').value,
+    terms: document.getElementById('q-terms').value || company.terms,
+    total: getTotal()
+  };
+  if(currentEditId) {
+    const idx = jobs.findIndex(j=>j.id===currentEditId);
+    if(idx>-1) jobs[idx]=job; else jobs.unshift(job);
+  } else {
+    jobs.unshift(job);
+  }
+  currentEditId = null;
+  alert('Quote '+num+' saved!');
+  showTab('jobs');
+}
+
+function clearQuote() {
+  if(!confirm('Clear this quote?')) return;
+  lineItems = {Labour:[],Material:[],Other:[]};
+  ['Labour','Material','Other'].forEach(cat => renderLines(cat));
+  ['q-client','q-phone','q-email','q-address','q-notes','q-terms','q-num'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('q-cont').value = 10;
+  document.getElementById('q-L').value = 2.5;
+  document.getElementById('q-W').value = 1.8;
+  document.getElementById('q-H').value = 2.4;
+  calcQuote();
+  currentEditId = null;
+}
+
+function previewQuote() {
+  const client = document.getElementById('q-client').value||'Client';
+  const address = document.getElementById('q-address').value||'—';
+  const date = document.getElementById('q-date').value||new Date().toISOString().slice(0,10);
+  const valid = document.getElementById('q-valid').value||30;
+  const num = document.getElementById('q-num').value||('Q-'+String(quoteCounter).padStart(3,'0'));
+  const notes = document.getElementById('q-notes').value;
+  const terms = document.getElementById('q-terms').value||company.terms;
+  let sub=0;
+  ['Labour','Material','Other'].forEach(cat=>lineItems[cat].forEach(l=>sub+=l.qty*l.rate));
+  const pct=parseInt(document.getElementById('q-cont').value)||0;
+  const cont=sub*pct/100;
+  const gst=(sub+cont)*0.1;
+  const total=sub+cont+gst;
+
+  let rows='';
+  ['Labour','Material','Other'].forEach(cat=>{
+    if(!lineItems[cat].length) return;
+    rows+=`<tr class="cat-row"><td colspan="4">${cat}</td></tr>`;
+    lineItems[cat].forEach(l=>{
+      rows+=`<tr><td>${l.name||cat}</td><td class="r">${l.qty}</td><td class="r">${fmt(l.rate)}</td><td class="r">${fmt(l.qty*l.rate)}</td></tr>`;
+    });
+  });
+
+  document.getElementById('preview-content').innerHTML=`
+    <div class="quote-doc">
+      <div class="quote-co-name">${company.name||'Your Company Name'}</div>
+      <div class="quote-doc-meta">
+        ${company.abn?'ABN: '+company.abn+'<br>':''}
+        ${company.address?company.address+'<br>':''}
+        ${company.phone?company.phone+'  ':''} ${company.email||''}
+        ${company.lic?'<br>QBCC: '+company.lic:''}
+      </div>
+      <hr class="quote-divider">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <div style="font-weight:600;font-size:15px">${client}</div>
+          <div style="font-size:13px;color:var(--text-muted)">${address}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:700">Quote</div>
+          <div style="font-size:12px;color:var(--text-muted)">${num}<br>${date}<br>Valid ${valid} days</div>
+        </div>
+      </div>
+      <table class="qt">
+        <thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Total</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:16px">
+        <div class="summary-row"><span class="lbl">Subtotal</span><span class="val">${fmt(sub)}</span></div>
+        ${pct?`<div class="summary-row"><span class="lbl">Contingency (${pct}%)</span><span class="val">${fmt(cont)}</span></div>`:''}
+        <div class="summary-row"><span class="lbl">GST (10%)</span><span class="val">${fmt(gst)}</span></div>
+        <div class="summary-row summary-total"><span class="lbl">Total (inc. GST)</span><span class="val">${fmt(total)}</span></div>
+      </div>
+      ${notes?`<hr class="quote-divider"><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.3px;text-transform:uppercase">Scope of works</div><div style="font-size:13px">${notes}</div>`:''}
+      ${terms?`<hr class="quote-divider"><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.3px;text-transform:uppercase">Terms & conditions</div><div style="font-size:12px;color:var(--text-muted)">${terms}</div>`:''}
+      <hr class="quote-divider">
+      <div class="sig-row">
+        <div class="sig-block"><div class="sig-line"></div>Client signature &amp; date</div>
+        <div class="sig-block"><div class="sig-line"></div>Authorised by &amp; date</div>
+      </div>
+    </div>`;
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-preview').classList.add('active');
+  document.getElementById('content').scrollTop=0;
+}
+
+// JOBS
+function setFilter(f, el) {
+  jobFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderJobs();
+}
+
+function renderJobs() {
+  const filtered = jobFilter ? jobs.filter(j=>j.status===jobFilter) : jobs;
+  document.getElementById('jobs-count').textContent = filtered.length + ' quote' + (filtered.length!==1?'s':'');
+  const c = document.getElementById('jobs-list');
+  if(!filtered.length) {
+    c.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/></svg><p>No quotes yet</p></div>';
+    return;
+  }
+  c.innerHTML='';
+  filtered.forEach(j => {
+    const d = document.createElement('div');
+    d.className = 'job-card';
+    d.onclick = () => openJobModal(j.id);
+    d.innerHTML=`
+      <div class="job-card-left">
+        <div class="job-card-name">${j.client}</div>
+        <div class="job-card-sub">${j.address||j.num}</div>
+        <div style="margin-top:6px"><span class="badge badge-${j.status}">${j.status}</span></div>
+      </div>
+      <div class="job-card-right">
+        <div class="job-card-total">${fmt(j.total)}</div>
+        <div class="job-card-date">${j.date}</div>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+function openJobModal(id) {
+  const j = jobs.find(j=>j.id===id);
+  if(!j) return;
+  const statuses = ['draft','sent','accepted','declined'];
+  document.getElementById('modal-body').innerHTML=`
+    <div class="modal-title">${j.client}</div>
+    <div class="modal-sub">${j.num} · ${j.date}</div>
+    <div class="modal-row"><span class="ml">Address</span><span>${j.address||'—'}</span></div>
+    <div class="modal-row"><span class="ml">Phone</span><span>${j.phone||'—'}</span></div>
+    <div class="modal-row"><span class="ml">Email</span><span style="font-size:13px">${j.email||'—'}</span></div>
+    <div class="modal-row"><span class="ml">Total (inc. GST)</span><span style="font-weight:700;color:var(--green);font-family:'DM Mono',monospace">${fmt(j.total)}</span></div>
+    <div class="modal-row" style="align-items:center">
+      <span class="ml">Status</span>
+      <select onchange="updateStatus(${j.id},this.value)" style="width:auto;font-size:14px;padding:6px 10px">
+        ${statuses.map(s=>`<option value="${s}" ${j.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn-sm" onclick="editJob(${j.id})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit quote
+      </button>
+      <button class="btn-sm" style="color:var(--red);border-color:var(--red-light)" onclick="deleteJob(${j.id})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        Delete
+      </button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function updateStatus(id, status) {
+  const j = jobs.find(j=>j.id===id);
+  if(j) { j.status=status; renderDash(); }
+}
+
+function editJob(id) {
+  const j = jobs.find(j=>j.id===id);
+  if(!j) return;
+  closeModal();
+  currentEditId = id;
+  document.getElementById('quote-page-title').textContent = 'Edit quote';
+  document.getElementById('q-client').value = j.client;
+  document.getElementById('q-phone').value = j.phone||'';
+  document.getElementById('q-email').value = j.email||'';
+  document.getElementById('q-address').value = j.address||'';
+  document.getElementById('q-date').value = j.date;
+  document.getElementById('q-valid').value = j.valid;
+  document.getElementById('q-num').value = j.num;
+  document.getElementById('q-L').value = j.dims.L;
+  document.getElementById('q-W').value = j.dims.W;
+  document.getElementById('q-H').value = j.dims.H;
+  document.getElementById('q-cont').value = j.cont;
+  document.getElementById('q-notes').value = j.notes||'';
+  document.getElementById('q-terms').value = j.terms||'';
+  lineItems = JSON.parse(JSON.stringify(j.lines));
+  ['Labour','Material','Other'].forEach(cat=>renderLines(cat));
+  showTab('quote');
+}
+
+function deleteJob(id) {
+  if(!confirm('Delete this quote?')) return;
+  jobs = jobs.filter(j=>j.id!==id);
+  closeModal();
+  renderJobs();
+  renderDash();
+}
+
+function closeModal(e) {
+  if(!e || e.target===document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// DASHBOARD
+function renderDash() {
+  document.getElementById('co-display-name').textContent = company.name || 'Your Reno Business';
+  document.getElementById('d-total').textContent = jobs.length;
+  const acc = jobs.filter(j=>j.status==='accepted');
+  document.getElementById('d-accepted').textContent = acc.length;
+  document.getElementById('d-pending').textContent = jobs.filter(j=>j.status==='sent').length;
+  document.getElementById('d-pipeline').textContent = fmt(acc.reduce((s,j)=>s+j.total,0));
+  const c = document.getElementById('dash-jobs');
+  if(!jobs.length) {
+    c.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/></svg><p>No quotes yet — tap New quote to start</p></div>';
+    return;
+  }
+  c.innerHTML='';
+  jobs.slice(0,5).forEach(j=>{
+    const d=document.createElement('div');
+    d.className='job-card';
+    d.onclick=()=>openJobModal(j.id);
+    d.innerHTML=`
+      <div class="job-card-left">
+        <div class="job-card-name">${j.client}</div>
+        <div class="job-card-sub">${j.address||j.num}</div>
+      </div>
+      <div class="job-card-right">
+        <div class="job-card-total">${fmt(j.total)}</div>
+        <span class="badge badge-${j.status}">${j.status}</span>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+// RATES
+function renderRates() {
+  const lc=document.getElementById('labour-rates'); lc.innerHTML='';
+  labourRates.forEach((r,i)=>{
+    const d=document.createElement('div'); d.className='rate-item';
+    d.innerHTML=`<input type="text" value="${r.name}" oninput="labourRates[${i}].name=this.value">
+      <input type="text" value="${r.unit}" style="text-align:right" oninput="labourRates[${i}].unit=this.value">
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" value="${r.rate}" style="text-align:right;padding-left:24px" oninput="labourRates[${i}].rate=parseFloat(this.value)||0"></div>
+      <button class="del-btn" onclick="labourRates.splice(${i},1);renderRates()" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+    lc.appendChild(d);
+  });
+  const mc=document.getElementById('material-rates'); mc.innerHTML='';
+  materialRates.forEach((r,i)=>{
+    const d=document.createElement('div'); d.className='rate-item';
+    d.innerHTML=`<input type="text" value="${r.name}" oninput="materialRates[${i}].name=this.value">
+      <input type="text" value="${r.unit}" style="text-align:right" oninput="materialRates[${i}].unit=this.value">
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" value="${r.rate}" style="text-align:right;padding-left:24px" oninput="materialRates[${i}].rate=parseFloat(this.value)||0"></div>
+      <button class="del-btn" onclick="materialRates.splice(${i},1);renderRates()" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+    mc.appendChild(d);
+  });
+}
+
+function addRate(type,name,unit,rate) {
+  if(type==='labour') labourRates.push({name,unit,rate});
+  else materialRates.push({name,unit,rate});
+  renderRates();
+}
+
+function loadRatesIntoQuote() {
+  lineItems={Labour:[],Material:[],Other:[]};
+  labourRates.forEach(r=>lineItems.Labour.push({name:r.name+' ('+r.unit+')',qty:1,rate:r.rate}));
+  materialRates.forEach(r=>lineItems.Material.push({name:r.name,qty:1,rate:r.rate}));
+  ['Labour','Material','Other'].forEach(cat=>renderLines(cat));
+  showTab('quote');
+}
+
+// SETTINGS
+function saveSettings() {
+  company.name=document.getElementById('co-name').value;
+  company.abn=document.getElementById('co-abn').value;
+  company.phone=document.getElementById('co-phone').value;
+  company.email=document.getElementById('co-email').value;
+  company.address=document.getElementById('co-address').value;
+  company.web=document.getElementById('co-web').value;
+  company.lic=document.getElementById('co-lic').value;
+  company.terms=document.getElementById('co-terms').value;
+  const s=document.getElementById('settings-saved');
+  s.style.display='block';
+  setTimeout(()=>s.style.display='none',2500);
+  document.getElementById('co-display-name').textContent=company.name||'Your Reno Business';
+}
+
+function loadSettings() {
+  document.getElementById('co-name').value=company.name;
+  document.getElementById('co-abn').value=company.abn;
+  document.getElementById('co-phone').value=company.phone;
+  document.getElementById('co-email').value=company.email;
+  document.getElementById('co-address').value=company.address;
+  document.getElementById('co-web').value=company.web;
+  document.getElementById('co-lic').value=company.lic;
+  document.getElementById('co-terms').value=company.terms;
+}
+
+// PERSISTENCE
+const DB = {
+  save() {
+    try {
+      localStorage.setItem('reno_jobs', JSON.stringify(jobs));
+      localStorage.setItem('reno_labourRates', JSON.stringify(labourRates));
+      localStorage.setItem('reno_materialRates', JSON.stringify(materialRates));
+      localStorage.setItem('reno_company', JSON.stringify(company));
+      localStorage.setItem('reno_quoteCounter', String(quoteCounter));
+    } catch(e) { console.warn('Storage save failed', e); }
+  },
+  load() {
+    try {
+      const j = localStorage.getItem('reno_jobs');
+      if(j) jobs = JSON.parse(j);
+      const lr = localStorage.getItem('reno_labourRates');
+      if(lr) labourRates = JSON.parse(lr);
+      const mr = localStorage.getItem('reno_materialRates');
+      if(mr) materialRates = JSON.parse(mr);
+      const co = localStorage.getItem('reno_company');
+      if(co) company = JSON.parse(co);
+      const qc = localStorage.getItem('reno_quoteCounter');
+      if(qc) quoteCounter = parseInt(qc)||1;
+    } catch(e) { console.warn('Storage load failed', e); }
+  }
+};
+
+// Patch save into all mutating functions
+const _saveQuoteOrig = saveQuote;
+function saveQuote(status) {
+  const client = document.getElementById('q-client').value || 'Unnamed client';
+  const num = document.getElementById('q-num').value || ('Q-'+String(quoteCounter).padStart(3,'0'));
+  if(!document.getElementById('q-num').value) quoteCounter++;
+  const job = {
+    id: currentEditId || Date.now(), num, status, client,
+    phone: document.getElementById('q-phone').value,
+    email: document.getElementById('q-email').value,
+    address: document.getElementById('q-address').value,
+    date: document.getElementById('q-date').value || new Date().toISOString().slice(0,10),
+    valid: document.getElementById('q-valid').value || 30,
+    dims: {L:document.getElementById('q-L').value, W:document.getElementById('q-W').value, H:document.getElementById('q-H').value},
+    lines: JSON.parse(JSON.stringify(lineItems)),
+    cont: document.getElementById('q-cont').value,
+    notes: document.getElementById('q-notes').value,
+    terms: document.getElementById('q-terms').value || company.terms,
+    total: getTotal()
+  };
+  if(currentEditId) {
+    const idx = jobs.findIndex(j=>j.id===currentEditId);
+    if(idx>-1) jobs[idx]=job; else jobs.unshift(job);
+  } else {
+    jobs.unshift(job);
+  }
+  currentEditId = null;
+  DB.save();
+  alert('Quote '+num+' saved!');
+  showTab('jobs');
+}
+
+const _updateStatusOrig = updateStatus;
+function updateStatus(id, status) {
+  const j = jobs.find(j=>j.id===id);
+  if(j) { j.status=status; DB.save(); renderDash(); }
+}
+
+const _deleteJobOrig = deleteJob;
+function deleteJob(id) {
+  if(!confirm('Delete this quote?')) return;
+  jobs = jobs.filter(j=>j.id!==id);
+  DB.save();
+  closeModal();
+  renderJobs();
+  renderDash();
+}
+
+const _saveSettingsOrig = saveSettings;
+function saveSettings() {
+  company.name=document.getElementById('co-name').value;
+  company.abn=document.getElementById('co-abn').value;
+  company.phone=document.getElementById('co-phone').value;
+  company.email=document.getElementById('co-email').value;
+  company.address=document.getElementById('co-address').value;
+  company.web=document.getElementById('co-web').value;
+  company.lic=document.getElementById('co-lic').value;
+  company.terms=document.getElementById('co-terms').value;
+  DB.save();
+  const s=document.getElementById('settings-saved');
+  s.style.display='block';
+  setTimeout(()=>s.style.display='none',2500);
+  document.getElementById('co-display-name').textContent=company.name||'Your Reno Business';
+}
+
+const _addRateOrig = addRate;
+function addRate(type,name,unit,rate) {
+  if(type==='labour') labourRates.push({name,unit,rate});
+  else materialRates.push({name,unit,rate});
+  DB.save();
+  renderRates();
+}
+
+// Patch renderRates to auto-save on edits via event delegation
+document.addEventListener('input', function(e) {
+  const t = e.target;
+  if(t.closest('#labour-rates') || t.closest('#material-rates')) {
+    DB.save();
+  }
+});
+
+// PWA Service Worker for offline support
+if('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'reno-v1';
+    const ASSETS = [self.location.href];
+    self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))));
+    self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(e.request)))));
+  `;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+
+// Init — load from storage first
+DB.load();
+document.getElementById('q-date').value = new Date().toISOString().slice(0,10);
+
+// Only add default line items if it's a fresh start (no saved data)
+if(!localStorage.getItem('reno_jobs')) {
+  addLine('Labour','Plumber',16,125);
+  addLine('Labour','Tiler',24,95);
+  addLine('Material','Floor tiles (supply & lay)',5,95);
+  addLine('Material','Wall tiles (supply & lay)',18,85);
+  addLine('Material','Waterproofing',5,45);
+  addLine('Other','Demo & waste removal',1,600);
+} else {
+  ['Labour','Material','Other'].forEach(cat => renderLines(cat));
+  calcQuote();
+}
+
+// Apply saved company settings
+if(company.terms) document.getElementById('q-terms').value = company.terms;
+
+renderDash();
+renderRates();
+</script>
+</body>
+</html>
